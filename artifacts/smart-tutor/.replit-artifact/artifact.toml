@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "المعلم الذكي"
+description = "An Arabic-first learning app for grade 11 and 12 students to choose a study level and work with an AI tutor. Includes secure sign-in, remembered sessions, and image and document attachments in chat."
+version = "1.0.0"
+id = "artifacts/smart-tutor"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 21624
+
+[services.development]
+run = "pnpm --filter @workspace/smart-tutor run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/smart-tutor", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/smart-tutor/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "21624"
+BASE_PATH = "/"
