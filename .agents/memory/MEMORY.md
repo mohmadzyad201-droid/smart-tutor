@@ -1,0 +1,1 @@
+- [Vite dependency cache](vite-dependency-cache.md) — after changing catalog React versions, clear the artifact Vite optimizer cache before judging preview errors.
