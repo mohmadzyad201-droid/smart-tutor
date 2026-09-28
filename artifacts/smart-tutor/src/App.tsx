@@ -90,7 +90,9 @@ const gradeInfo = {
 
 type Grade = keyof typeof gradeInfo;
 type Attachment = { id: string; name: string; type: string; size: number; url: string };
-type StudentMessage = { id: string; text: string; attachments: Attachment[]; sentAt: string };
+type StudentMessage = { id: string; role: 'student'; text: string; attachments: Attachment[]; sentAt: string };
+type AssistantMessage = { id: string; role: 'assistant'; text: string; sentAt: string };
+type ChatMessage = StudentMessage | AssistantMessage;
 
 const MIME_BY_EXTENSION: Record<string, string> = {
   png: 'image/png',
@@ -456,6 +458,46 @@ function AttachmentPreview({ attachment, onRemove }: { attachment: { id: string;
   );
 }
 
+function ChatMessageView({ message }: { message: ChatMessage }) {
+  if (message.role === 'assistant') {
+    return (
+      <div className="me-auto max-w-[90%] sm:max-w-[78%]" data-testid={`message-assistant-${message.id}`}>
+        <div className="rounded-2xl rounded-bs-md border border-[#d7e7ec] bg-white px-4 py-3 text-[#183348] shadow-sm">
+          <p className="whitespace-pre-wrap text-sm leading-7">{message.text}</p>
+        </div>
+        <p className="mt-1 px-1 text-[10px] text-[#8aa0ad]">{message.sentAt}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="ms-auto max-w-[90%] sm:max-w-[72%]" data-testid={`message-student-${message.id}`}>
+      <div className="rounded-2xl rounded-bl-md bg-[#1684c2] px-4 py-3 text-white shadow-sm">
+        {message.text && <p className="whitespace-pre-wrap text-sm leading-7">{message.text}</p>}
+        {message.attachments.length > 0 && (
+          <div className={`mt-3 grid gap-2 ${message.attachments.length > 1 ? 'sm:grid-cols-2' : ''}`}>
+            {message.attachments.map((attachment) => attachment.type.startsWith('image/') ? (
+              <a href={attachment.url} target="_blank" rel="noreferrer" key={attachment.id} className="block overflow-hidden rounded-xl border border-white/25 bg-white/10" data-testid={`link-sent-image-${attachment.id}`}>
+                <img src={attachment.url} alt={attachment.name} className="max-h-44 w-full object-cover" />
+                <span className="block truncate px-2 py-1 text-[10px] text-white/80">{attachment.name}</span>
+              </a>
+            ) : (
+              <a href={attachment.url} target="_blank" rel="noreferrer" download={attachment.name} key={attachment.id} className="flex min-w-[170px] items-center gap-2 rounded-xl border border-white/25 bg-white/10 p-2 text-start" data-testid={`link-sent-document-${attachment.id}`}>
+                <FileText size={20} />
+                <span className="min-w-0">
+                  <span className="block truncate text-xs font-semibold">{attachment.name}</span>
+                  <span className="text-[10px] text-white/70">{attachment.type.split('/').pop()?.toUpperCase()}</span>
+                </span>
+              </a>
+            ))}
+          </div>
+        )}
+      </div>
+      <p className="mt-1 px-1 text-[10px] text-[#8aa0ad]">{message.sentAt}</p>
+    </div>
+  );
+}
+
 function ChatPage() {
   const { grade: rawGrade } = useParams<{ grade: string }>();
   const grade = rawGrade === '12' ? '12' : '11';
@@ -463,7 +505,9 @@ function ChatPage() {
   const { isSignedIn } = useAuth();
   const [text, setText] = useState('');
   const [pending, setPending] = useState<{ id: string; file: File; preview: string }[]>([]);
-  const [messages, setMessages] = useState<StudentMessage[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [isResponding, setIsResponding] = useState(false);
+  const [aiError, setAiError] = useState<'service' | 'question' | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const objectUrls = useRef(new Set<string>());
@@ -491,17 +535,65 @@ function ChatPage() {
     if (item) { URL.revokeObjectURL(item.preview); objectUrls.current.delete(item.preview); }
     return current.filter((entry) => entry.id !== id);
   });
-  const sendMessage = () => {
+  const sendMessage = async () => {
     if (!canSend) return;
+    const question = text.trim();
+    const sentAttachments = pending.map(({ file, preview, id }) => ({
+      id,
+      name: file.name,
+      type: getFileMimeType(file),
+      size: file.size,
+      url: preview,
+    }));
     const message: StudentMessage = {
       id: `${Date.now()}`,
-      text: text.trim(),
+      role: 'student',
+      text: question,
       sentAt: new Intl.DateTimeFormat(languageOption.locale, { hour: 'numeric', minute: 'numeric' }).format(new Date()),
-      attachments: pending.map(({ file, preview, id }) => ({ id, name: file.name, type: getFileMimeType(file), size: file.size, url: preview })),
+      attachments: sentAttachments,
     };
     setMessages((current) => [...current, message]);
     setText('');
     setPending([]);
+    setAiError(null);
+    if (!question) {
+      setAiError('question');
+      return;
+    }
+
+    setIsResponding(true);
+    try {
+      const history = messages
+        .filter((entry) => entry.text.trim().length > 0)
+        .map((entry) => ({
+          role: entry.role === 'assistant' ? 'assistant' : 'user',
+          content: entry.text,
+        }));
+      const response = await fetch('/api/tutor/chat', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          grade,
+          language: languageOption.code,
+          message: question,
+          history,
+          attachments: sentAttachments.map(({ name, type }) => ({ name, type })),
+        }),
+      });
+      const data = await response.json().catch(() => ({})) as { reply?: string };
+      if (!response.ok || !data.reply) throw new Error('Tutor response unavailable');
+      setMessages((current) => [...current, {
+        id: `assistant-${Date.now()}`,
+        role: 'assistant',
+        text: data.reply as string,
+        sentAt: new Intl.DateTimeFormat(languageOption.locale, { hour: 'numeric', minute: 'numeric' }).format(new Date()),
+      }]);
+    } catch {
+      setAiError('service');
+    } finally {
+      setIsResponding(false);
+    }
   };
   const fullGradeLabel = gradeLabel(grade, t);
   return (
@@ -514,12 +606,14 @@ function ChatPage() {
             <div className="flex items-center gap-3 border-b border-[#e8f1f3] bg-[#fbfeff] px-5 py-4"><div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#e8f7fa] text-[#1684c2]"><MessageCircle size={20} /></div><div><h2 className="font-bold text-[#183348]">{t('brand')}</h2><p className="text-xs text-[#668196]">{t('chatAssistant', { grade: fullGradeLabel })}</p></div><span className="ms-auto flex items-center gap-1.5 rounded-full bg-[#effaf4] px-2.5 py-1 text-[11px] font-semibold text-[#3c8b66]"><span className="h-1.5 w-1.5 rounded-full bg-[#54b77c]" />{t('available')}</span></div>
             <div className="thin-scrollbar flex flex-1 flex-col gap-5 overflow-y-auto bg-[linear-gradient(180deg,#fbfeff_0%,#f2fafc_100%)] p-5 sm:p-8">
               {messages.length === 0 && <div className="m-auto max-w-sm text-center"><div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#e8f7fa] text-[#1684c2]"><Sparkles size={25} /></div><h3 className="font-bold text-[#183348]">{t('emptyTitle')}</h3><p className="mt-2 text-sm leading-7 text-[#668196]">{t('emptyDescription')}</p></div>}
-              {messages.map((message) => <div className="ms-auto max-w-[90%] sm:max-w-[72%]" key={message.id} data-testid={`message-student-${message.id}`}><div className="rounded-2xl rounded-bl-md bg-[#1684c2] px-4 py-3 text-white shadow-sm">{message.text && <p className="whitespace-pre-wrap text-sm leading-7">{message.text}</p>}{message.attachments.length > 0 && <div className={`mt-3 grid gap-2 ${message.attachments.length > 1 ? 'sm:grid-cols-2' : ''}`}>{message.attachments.map((attachment) => attachment.type.startsWith('image/') ? <a href={attachment.url} target="_blank" rel="noreferrer" key={attachment.id} className="block overflow-hidden rounded-xl border border-white/25 bg-white/10" data-testid={`link-sent-image-${attachment.id}`}><img src={attachment.url} alt={attachment.name} className="max-h-44 w-full object-cover" /><span className="block truncate px-2 py-1 text-[10px] text-white/80">{attachment.name}</span></a> : <a href={attachment.url} target="_blank" rel="noreferrer" download={attachment.name} key={attachment.id} className="flex min-w-[170px] items-center gap-2 rounded-xl border border-white/25 bg-white/10 p-2 text-start" data-testid={`link-sent-document-${attachment.id}`}><FileText size={20} /><span className="min-w-0"><span className="block truncate text-xs font-semibold">{attachment.name}</span><span className="text-[10px] text-white/70">{attachment.type.split('/').pop()?.toUpperCase()}</span></span></a>)}</div>}</div><p className="mt-1 px-1 text-[10px] text-[#8aa0ad]">{message.sentAt}</p></div>)}
+              {messages.map((message) => <ChatMessageView message={message} key={message.id} />)}
+              {isResponding && <div className="me-auto rounded-2xl rounded-bs-md border border-[#d7e7ec] bg-white px-4 py-3 text-sm text-[#668196]" data-testid="ai-thinking">{t('aiThinking')}</div>}
               <div ref={chatEndRef} />
             </div>
             <div className="border-t border-[#e8f1f3] bg-white p-3 sm:p-4">
               {pending.length > 0 && <div className="thin-scrollbar mb-3 flex gap-2 overflow-x-auto pb-1">{pending.map((attachment) => <AttachmentPreview attachment={attachment} onRemove={() => removeFile(attachment.id)} key={attachment.id} />)}</div>}
-              <div className="flex items-end gap-2 rounded-2xl border border-[#d7e7ec] bg-[#f8fcfd] p-2 focus-within:border-[#1684c2]"><button type="button" onClick={() => inputRef.current?.click()} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-[#668196] transition hover:bg-[#e8f7fa] hover:text-[#1684c2]" aria-label={t('attach')} data-testid="button-attach"><Paperclip size={19} /><span className="sr-only">{t('attach')}</span></button><input ref={inputRef} type="file" multiple accept=".png,.jpg,.jpeg,.pdf,.docx,.txt" onChange={addFiles} className="hidden" data-testid="input-attachments" /><textarea value={text} onChange={(event) => setText(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); sendMessage(); } }} rows={1} placeholder={t('chatPlaceholder')} className="max-h-32 min-h-10 flex-1 resize-none border-0 bg-transparent px-2 py-2 text-sm text-[#183348] outline-none placeholder:text-[#8aa0ad]" data-testid="input-chat-message" /><button type="button" disabled={!canSend} onClick={sendMessage} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#1684c2] text-white transition hover:bg-[#087eae] disabled:cursor-not-allowed disabled:opacity-40" aria-label={t('send')} data-testid="button-send-message"><ArrowUp size={19} /></button></div>
+              {aiError && <p className="mt-2 px-1 text-xs font-semibold text-[#c24140]" role="alert">{aiError === 'question' ? t('aiNeedQuestion') : t('aiError')}</p>}
+              <div className="flex items-end gap-2 rounded-2xl border border-[#d7e7ec] bg-[#f8fcfd] p-2 focus-within:border-[#1684c2]"><button type="button" onClick={() => inputRef.current?.click()} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-[#668196] transition hover:bg-[#e8f7fa] hover:text-[#1684c2]" aria-label={t('attach')} data-testid="button-attach"><Paperclip size={19} /><span className="sr-only">{t('attach')}</span></button><input ref={inputRef} type="file" multiple accept=".png,.jpg,.jpeg,.pdf,.docx,.txt" onChange={addFiles} className="hidden" data-testid="input-attachments" /><textarea value={text} onChange={(event) => setText(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); void sendMessage(); } }} rows={1} placeholder={t('chatPlaceholder')} className="max-h-32 min-h-10 flex-1 resize-none border-0 bg-transparent px-2 py-2 text-sm text-[#183348] outline-none placeholder:text-[#8aa0ad]" data-testid="input-chat-message" /><button type="button" disabled={!canSend || isResponding} onClick={() => void sendMessage()} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#1684c2] text-white transition hover:bg-[#087eae] disabled:cursor-not-allowed disabled:opacity-40" aria-label={t('send')} data-testid="button-send-message"><ArrowUp size={19} /></button></div>
               <p className="mt-2 px-1 text-[10px] text-[#8aa0ad]">{t('attachmentFormats')}</p>
             </div>
           </section>

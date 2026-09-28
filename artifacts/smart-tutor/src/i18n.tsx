@@ -89,6 +89,9 @@ type Messages = {
   loading: string;
   notFoundTitle: string;
   notFoundDescription: string;
+  aiThinking: string;
+  aiError: string;
+  aiNeedQuestion: string;
 };
 
 const dictionaries: Record<LanguageCode, Messages> = {
@@ -107,6 +110,7 @@ const dictionaries: Record<LanguageCode, Messages> = {
     backToPortal: 'العودة إلى البوابة', emptyTitle: 'ما الذي تريد فهمه اليوم؟', emptyDescription: 'اكتب سؤالك أو أرفق صورة المسألة، وسجّل أفكارك هنا لتبدأ جلسة تعلمك.',
     chatPlaceholder: 'اكتب سؤالك هنا...', attach: 'إرفاق ملفات', send: 'إرسال الرسالة', attachmentFormats: 'PNG و JPG و PDF و DOCX و TXT، ويمكنك اختيار أكثر من ملف',
     removeAttachment: 'إزالة {{name}}', fileType: 'ملف {{type}}', loading: 'جار التحميل', notFoundTitle: 'الصفحة غير موجودة', notFoundDescription: 'تعذر العثور على الصفحة التي طلبتها.',
+    aiThinking: 'المعلّم الذكي يكتب إجابة...', aiError: 'تعذر الحصول على إجابة الآن. حاول مرة أخرى.', aiNeedQuestion: 'اكتب سؤالك نصياً حتى يتمكن المعلّم الذكي من الإجابة.',
   },
   en: {
     brand: 'Smart Tutor', homeSignIn: 'Sign in', homeEyebrow: 'Your companion on the path to excellence',
@@ -123,6 +127,7 @@ const dictionaries: Record<LanguageCode, Messages> = {
     backToPortal: 'Back to hub', emptyTitle: 'What would you like to understand today?', emptyDescription: 'Write your question or attach a problem image to start your learning session.',
     chatPlaceholder: 'Write your question here...', attach: 'Attach files', send: 'Send message', attachmentFormats: 'PNG, JPG, PDF, DOCX, and TXT. You can choose multiple files.',
     removeAttachment: 'Remove {{name}}', fileType: '{{type}} file', loading: 'Loading', notFoundTitle: 'Page not found', notFoundDescription: 'We could not find the page you requested.',
+    aiThinking: 'The smart tutor is writing an answer...', aiError: 'We could not get an answer right now. Please try again.', aiNeedQuestion: 'Write your question so the smart tutor can answer.',
   },
   fr: {
     brand: 'Tuteur intelligent', homeSignIn: 'Se connecter', homeEyebrow: 'Votre compagnon vers la réussite',
@@ -139,6 +144,7 @@ const dictionaries: Record<LanguageCode, Messages> = {
     backToPortal: 'Retour à l’espace', emptyTitle: 'Que souhaitez-vous comprendre aujourd’hui ?', emptyDescription: 'Écrivez votre question ou joignez une image pour commencer.',
     chatPlaceholder: 'Écrivez votre question ici…', attach: 'Joindre des fichiers', send: 'Envoyer', attachmentFormats: 'PNG, JPG, PDF, DOCX et TXT. Plusieurs fichiers sont acceptés.',
     removeAttachment: 'Supprimer {{name}}', fileType: 'Fichier {{type}}', loading: 'Chargement', notFoundTitle: 'Page introuvable', notFoundDescription: 'La page demandée est introuvable.',
+    aiThinking: 'Le tuteur intelligent rédige une réponse…', aiError: 'Impossible d’obtenir une réponse pour le moment. Réessayez.', aiNeedQuestion: 'Écrivez votre question pour obtenir une réponse.',
   },
   es: {
     brand: 'Tutor inteligente', homeSignIn: 'Iniciar sesión', homeEyebrow: 'Tu compañero hacia la excelencia',
@@ -155,6 +161,7 @@ const dictionaries: Record<LanguageCode, Messages> = {
     backToPortal: 'Volver al espacio', emptyTitle: '¿Qué quieres entender hoy?', emptyDescription: 'Escribe tu pregunta o adjunta una imagen para comenzar tu sesión.',
     chatPlaceholder: 'Escribe tu pregunta aquí…', attach: 'Adjuntar archivos', send: 'Enviar mensaje', attachmentFormats: 'PNG, JPG, PDF, DOCX y TXT. Puedes elegir varios archivos.',
     removeAttachment: 'Quitar {{name}}', fileType: 'Archivo {{type}}', loading: 'Cargando', notFoundTitle: 'Página no encontrada', notFoundDescription: 'No pudimos encontrar la página solicitada.',
+    aiThinking: 'El tutor inteligente está escribiendo una respuesta…', aiError: 'No pudimos obtener una respuesta. Inténtalo de nuevo.', aiNeedQuestion: 'Escribe tu pregunta para que el tutor pueda responder.',
   },
   de: {
     brand: 'Intelligenter Tutor', homeSignIn: 'Anmelden', homeEyebrow: 'Dein Begleiter auf dem Weg zum Erfolg',
@@ -171,6 +178,7 @@ const dictionaries: Record<LanguageCode, Messages> = {
     backToPortal: 'Zurück zum Lernbereich', emptyTitle: 'Was möchtest du heute verstehen?', emptyDescription: 'Schreibe deine Frage oder füge ein Aufgabenbild an, um zu beginnen.',
     chatPlaceholder: 'Schreibe deine Frage hier…', attach: 'Dateien anhängen', send: 'Nachricht senden', attachmentFormats: 'PNG, JPG, PDF, DOCX und TXT. Mehrere Dateien sind möglich.',
     removeAttachment: '{{name}} entfernen', fileType: '{{type}}-Datei', loading: 'Wird geladen', notFoundTitle: 'Seite nicht gefunden', notFoundDescription: 'Die angeforderte Seite wurde nicht gefunden.',
+    aiThinking: 'Der intelligente Tutor schreibt eine Antwort…', aiError: 'Wir konnten gerade keine Antwort erhalten. Bitte versuche es erneut.', aiNeedQuestion: 'Schreibe deine Frage, damit der Tutor antworten kann.',
   },
   tr: {
     brand: 'Akıllı Öğretmen', homeSignIn: 'Giriş yap', homeEyebrow: 'Başarı yolculuğundaki arkadaşın',
@@ -187,6 +195,7 @@ const dictionaries: Record<LanguageCode, Messages> = {
     backToPortal: 'Öğrenme alanına dön', emptyTitle: 'Bugün neyi anlamak istiyorsun?', emptyDescription: 'Sorunu yaz veya bir problem görseli ekleyerek öğrenme oturumunu başlat.',
     chatPlaceholder: 'Sorunu buraya yaz…', attach: 'Dosya ekle', send: 'Mesaj gönder', attachmentFormats: 'PNG, JPG, PDF, DOCX ve TXT. Birden fazla dosya seçebilirsin.',
     removeAttachment: '{{name}} dosyasını kaldır', fileType: '{{type}} dosyası', loading: 'Yükleniyor', notFoundTitle: 'Sayfa bulunamadı', notFoundDescription: 'İstediğin sayfayı bulamadık.',
+    aiThinking: 'Akıllı öğretmen cevap yazıyor…', aiError: 'Şu anda cevap alınamadı. Lütfen tekrar deneyin.', aiNeedQuestion: 'Öğretmenin cevap verebilmesi için sorunuzu yazın.',
   },
   ru: {
     brand: 'Умный репетитор', homeSignIn: 'Войти', homeEyebrow: 'Твой помощник на пути к успеху',
@@ -203,6 +212,7 @@ const dictionaries: Record<LanguageCode, Messages> = {
     backToPortal: 'Вернуться в пространство', emptyTitle: 'Что ты хочешь понять сегодня?', emptyDescription: 'Напиши вопрос или прикрепи изображение задачи, чтобы начать.',
     chatPlaceholder: 'Напиши вопрос здесь…', attach: 'Прикрепить файлы', send: 'Отправить', attachmentFormats: 'PNG, JPG, PDF, DOCX и TXT. Можно выбрать несколько файлов.',
     removeAttachment: 'Удалить {{name}}', fileType: '{{type}}-файл', loading: 'Загрузка', notFoundTitle: 'Страница не найдена', notFoundDescription: 'Мы не нашли запрошенную страницу.',
+    aiThinking: 'Умный репетитор готовит ответ…', aiError: 'Не удалось получить ответ. Попробуйте ещё раз.', aiNeedQuestion: 'Напиши вопрос, чтобы репетитор мог ответить.',
   },
   zh: {
     brand: '智能导师', homeSignIn: '登录', homeEyebrow: '陪你走过每一步成长',
@@ -219,6 +229,7 @@ const dictionaries: Record<LanguageCode, Messages> = {
     backToPortal: '返回学习中心', emptyTitle: '今天想弄懂什么？', emptyDescription: '写下问题或附上题目图片，开始你的学习会话。',
     chatPlaceholder: '在这里写下问题…', attach: '添加文件', send: '发送消息', attachmentFormats: '支持 PNG、JPG、PDF、DOCX 和 TXT，可选择多个文件。',
     removeAttachment: '移除 {{name}}', fileType: '{{type}} 文件', loading: '加载中', notFoundTitle: '找不到页面', notFoundDescription: '无法找到你请求的页面。',
+    aiThinking: '智能导师正在撰写答案…', aiError: '暂时无法获取答案，请重试。', aiNeedQuestion: '请写下问题，智能导师才能回答。',
   },
   ja: {
     brand: 'スマートチューター', homeSignIn: 'ログイン', homeEyebrow: '成長への道を支える学習パートナー',
@@ -235,6 +246,7 @@ const dictionaries: Record<LanguageCode, Messages> = {
     backToPortal: 'ポータルに戻る', emptyTitle: '今日は何を理解したいですか？', emptyDescription: '質問を書き込むか問題の画像を添付して、学習を始めましょう。',
     chatPlaceholder: 'ここに質問を書いてください…', attach: 'ファイルを添付', send: 'メッセージを送信', attachmentFormats: 'PNG、JPG、PDF、DOCX、TXTに対応。複数選択できます。',
     removeAttachment: '{{name}}を削除', fileType: '{{type}}ファイル', loading: '読み込み中', notFoundTitle: 'ページが見つかりません', notFoundDescription: '指定されたページを見つけられませんでした。',
+    aiThinking: 'スマートチューターが回答を書いています…', aiError: '回答を取得できませんでした。もう一度お試しください。', aiNeedQuestion: '回答のために質問を書いてください。',
   },
   ko: {
     brand: '스마트 튜터', homeSignIn: '로그인', homeEyebrow: '성장 여정을 함께하는 학습 파트너',
@@ -251,6 +263,7 @@ const dictionaries: Record<LanguageCode, Messages> = {
     backToPortal: '학습 포털로 돌아가기', emptyTitle: '오늘은 무엇을 이해하고 싶나요?', emptyDescription: '질문을 작성하거나 문제 이미지를 첨부하여 학습을 시작하세요.',
     chatPlaceholder: '여기에 질문을 입력하세요…', attach: '파일 첨부', send: '메시지 보내기', attachmentFormats: 'PNG, JPG, PDF, DOCX, TXT 지원. 여러 파일을 선택할 수 있습니다.',
     removeAttachment: '{{name}} 삭제', fileType: '{{type}} 파일', loading: '로드 중', notFoundTitle: '페이지를 찾을 수 없습니다', notFoundDescription: '요청한 페이지를 찾지 못했습니다.',
+    aiThinking: '스마트 튜터가 답변을 작성하고 있습니다…', aiError: '지금은 답변을 가져올 수 없습니다. 다시 시도해 주세요.', aiNeedQuestion: '답변을 받으려면 질문을 입력하세요.',
   },
   he: {
     brand: 'מורה חכם', homeSignIn: 'התחברות', homeEyebrow: 'השותף שלך בדרך למצוינות',
@@ -267,6 +280,7 @@ const dictionaries: Record<LanguageCode, Messages> = {
     backToPortal: 'חזרה למרחב הלמידה', emptyTitle: 'מה תרצו להבין היום?', emptyDescription: 'כתבו שאלה או צרפו תמונה של הבעיה כדי להתחיל את המפגש.',
     chatPlaceholder: 'כתבו את השאלה כאן…', attach: 'צירוף קבצים', send: 'שליחת הודעה', attachmentFormats: 'PNG, JPG, PDF, DOCX ו-TXT. ניתן לבחור כמה קבצים.',
     removeAttachment: 'הסרת {{name}}', fileType: 'קובץ {{type}}', loading: 'טוען', notFoundTitle: 'הדף לא נמצא', notFoundDescription: 'לא הצלחנו למצוא את הדף שביקשתם.',
+    aiThinking: 'המורה החכם כותב תשובה…', aiError: 'לא ניתן לקבל תשובה כרגע. נסו שוב.', aiNeedQuestion: 'כתבו את השאלה כדי שהמורה יוכל לענות.',
   },
   pt: {
     brand: 'Tutor inteligente', homeSignIn: 'Entrar', homeEyebrow: 'Seu companheiro na jornada da excelência',
@@ -283,6 +297,7 @@ const dictionaries: Record<LanguageCode, Messages> = {
     backToPortal: 'Voltar ao espaço', emptyTitle: 'O que você quer entender hoje?', emptyDescription: 'Escreva sua pergunta ou anexe uma imagem para começar.',
     chatPlaceholder: 'Escreva sua pergunta aqui…', attach: 'Anexar arquivos', send: 'Enviar mensagem', attachmentFormats: 'PNG, JPG, PDF, DOCX e TXT. Você pode escolher vários arquivos.',
     removeAttachment: 'Remover {{name}}', fileType: 'Arquivo {{type}}', loading: 'Carregando', notFoundTitle: 'Página não encontrada', notFoundDescription: 'Não encontramos a página solicitada.',
+    aiThinking: 'O tutor inteligente está escrevendo uma resposta…', aiError: 'Não foi possível obter uma resposta. Tente novamente.', aiNeedQuestion: 'Escreva sua pergunta para que o tutor possa responder.',
   },
   it: {
     brand: 'Tutor intelligente', homeSignIn: 'Accedi', homeEyebrow: 'Il tuo compagno verso l’eccellenza',
@@ -299,6 +314,7 @@ const dictionaries: Record<LanguageCode, Messages> = {
     backToPortal: 'Torna allo spazio', emptyTitle: 'Cosa vuoi capire oggi?', emptyDescription: 'Scrivi la tua domanda o allega un’immagine per iniziare.',
     chatPlaceholder: 'Scrivi qui la tua domanda…', attach: 'Allega file', send: 'Invia messaggio', attachmentFormats: 'PNG, JPG, PDF, DOCX e TXT. Puoi scegliere più file.',
     removeAttachment: 'Rimuovi {{name}}', fileType: 'File {{type}}', loading: 'Caricamento', notFoundTitle: 'Pagina non trovata', notFoundDescription: 'Non abbiamo trovato la pagina richiesta.',
+    aiThinking: 'Il tutor intelligente sta scrivendo una risposta…', aiError: 'Non è stato possibile ottenere una risposta. Riprova.', aiNeedQuestion: 'Scrivi la tua domanda per ricevere una risposta.',
   },
 };
 
